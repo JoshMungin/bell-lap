@@ -20,7 +20,10 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return
 
   event.respondWith(
-    fetch(request)
+    // no-cache: always ask GitHub whether the file changed, instead of reusing the
+    // browser's copy for up to 10 minutes, which kept new versions from showing.
+    // Fetched by URL because Chrome won't copy a page-navigation request with options.
+    fetch(request.url, { cache: 'no-cache' })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone()
