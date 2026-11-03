@@ -1,0 +1,46 @@
+import{a as e,c as t,d as n,i as r,n as i,t as a}from"./index-D00JImOW.js";import{C as o,O as s,_ as c,a as l,b as u,c as d,d as f,f as p,l as m,m as h,n as g,p as _,r as v,s as y,t as b,u as ee,w as x,x as S,y as C}from"./hologramMaterial-DLmj43N8.js";import{t as te}from"./useNearScreen-CbywjL18.js";var w=n(t(),1);function T(e){let t=new Map,n=new Map,r=e.clone();return E(e,r,function(e,r){t.set(r,e),n.set(e,r)}),r.traverse(function(e){if(!e.isSkinnedMesh)return;let r=e,i=t.get(e),a=i.skeleton.bones;r.skeleton=i.skeleton.clone(),r.bindMatrix.copy(i.bindMatrix),r.skeleton.bones=a.map(function(e){return n.get(e)}),r.bind(r.skeleton,r.bindMatrix)}),r}function E(e,t,n){n(e,t);for(let r=0;r<e.children.length;r++)E(e.children[r],t.children[r],n)}var D=1.75,O={gluteMax:`glute`,gluteMed:`glute`,piriformis:`glute`,iliopsoas:`hipFlexor`,tfl:`outerHip`,adductors:`innerThigh`,bicepsFemoris:`hamstring`,semitendinosus:`hamstring`,semimembranosus:`hamstring`,rectusFemoris:`quad`,vastusLateralis:`quad`,vastusMedialis:`quad`,vastusIntermedius:`quad`,gastrocnemius:`calf`,soleus:`lowerCalf`,achilles:`achilles`},k=Math.PI/180,A=new s(1,0,0),j=new s(0,0,1),M={lowerBack:`spine.001`,leftHip:`thigh.L`,leftKnee:`shin.L`,leftAnkle:`foot.L`,leftHeel:`heel.02.L`,leftToe:`toe.L`,rightHip:`thigh.R`,rightKnee:`shin.R`,rightAnkle:`foot.R`,rightHeel:`heel.02.R`,rightToe:`toe.R`,leftShoulder:`upper_arm.L`,leftElbow:`forearm.L`,leftHand:`hand.L`,rightShoulder:`upper_arm.R`,rightElbow:`forearm.R`,rightHand:`hand.R`},N=`
+  #include <common>
+  #include <skinning_pars_vertex>
+  attribute float glowMask;
+  varying vec3 vNormal;
+  varying vec3 vToCamera;
+  varying float vGlow;
+
+  void main() {
+    #include <beginnormal_vertex>
+    #include <skinbase_vertex>
+    #include <skinnormal_vertex>
+    #include <defaultnormal_vertex>
+    #include <begin_vertex>
+    #include <skinning_vertex>
+    vec4 viewPosition = modelViewMatrix * vec4(transformed, 1.0);
+    vNormal = normalize(transformedNormal);
+    vToCamera = normalize(-viewPosition.xyz);
+    vGlow = glowMask;
+    gl_Position = projectionMatrix * viewPosition;
+  }
+`,P=`
+  uniform vec3 color;
+  varying vec3 vNormal;
+  varying vec3 vToCamera;
+
+  void main() {
+    float facing = abs(dot(normalize(vNormal), normalize(vToCamera)));
+    float rim = pow(1.0 - facing, 1.6);
+    float alpha = (0.16 + rim * 0.84) * 0.8;
+    gl_FragColor = vec4(color * (0.45 + rim * 1.1), alpha);
+  }
+`,ne=`
+  uniform vec3 color;
+  uniform float glow;
+  varying vec3 vNormal;
+  varying vec3 vToCamera;
+  varying float vGlow;
+
+  void main() {
+    float lit = clamp(vGlow * 1.8, 0.0, 1.0) * glow;
+    if (lit < 0.02) discard;
+    float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vToCamera))), 1.6);
+    gl_FragColor = vec4(color * (0.75 + rim * 0.6), lit * (0.7 + rim * 0.3));
+  }
+`;function F(){return new o({uniforms:{color:{value:new f(`#4fa8ff`)}},vertexShader:N,fragmentShader:P,transparent:!0,side:2,blending:2,depthWrite:!1})}function I(){return new o({uniforms:{color:{value:new f(`#ff8a3d`)},glow:{value:0}},vertexShader:N,fragmentShader:ne,transparent:!0,side:0,depthWrite:!1})}function L(e,t){let n=e.getObjectByName(u.sanitizeNodeName(t));if(!(n instanceof y))throw Error(`Body model has no bone named ${t}`);return n}function R(e){return e.getWorldPosition(new s)}function z(e){return e.getWorldQuaternion(new S)}function B(e,t,n,r){let i=(e,t,n)=>{let r=Math.min(Math.max((n-e)/(t-e),0),1);return r*r*(3-2*r)};return i(t-r,t+r,e)*(1-i(n-r,n+r,e))}function V(e,t){let{mesh:n,bones:r}=e,i=n.geometry,a=i.getAttribute(`position`),o=i.getAttribute(`normal`),c=i.getAttribute(`skinIndex`),l=i.getAttribute(`skinWeight`),u=e=>n.skeleton.bones.indexOf(e),d=u(r.rightHip),f=u(r.rightKnee),p=R(r.rightHip),m=R(r.rightKnee),h=R(r.rightAnkle),g=new s(1,0,0),_=j.clone().negate(),v=new Float32Array(a.count),y=new s,b=new s,x=(e,t)=>{let n=0;for(let r=0;r<4;r++)c.getComponent(e,r)===t&&(n+=l.getComponent(e,r));return n},S=(e,t=.15)=>B(b.dot(e),t,1.5,.2),C=(e,t)=>(e.y-y.y)/(e.y-t.y);for(let e=0;e<a.count;e++){y.fromBufferAttribute(a,e),n.localToWorld(y),b.fromBufferAttribute(o,e).transformDirection(n.matrixWorld);let r=x(e,d),i=x(e,f),s=B(y.y-p.y,-.14,.16,.05)*B(y.x-p.x,-.14,.09,.03),c={quad:r*S(j),hamstring:r*S(_),innerThigh:r*S(g,.3)*B(C(p,m),-.1,.75,.1),outerHip:r*S(g.clone().negate(),.3)*B(C(p,m),-.2,.5,.1),glute:s*S(_)*B(y.z-p.z,-1,0,.03),hipFlexor:s*S(j)*B(y.y-p.y,-.08,.12,.04),calf:i*S(_)*B(C(m,h),-.1,.55,.1),lowerCalf:i*S(_)*B(C(m,h),.35,.9,.1),achilles:i*S(_,.3)*B(C(m,h),.75,1.15,.08)};for(let n of t)v[e]=Math.max(v[e],c[n])}return new ee(v,1)}function H(e,t){let n=T(e),r=new h;r.rotation.y=-Math.PI/2,r.add(n);let i=new h;i.add(r);let a=null;if(n.traverse(e=>{e instanceof x&&(a=e)}),!a)throw Error(`Body model has no skinned mesh`);let o=a;o.frustumCulled=!1,i.updateMatrixWorld(!0),o.geometry.computeBoundingBox();let c=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);i.scale.setScalar(D/(c.max.y-c.min.y)),i.updateMatrixWorld(!0);let l=Object.fromEntries(Object.entries(M).map(([e,t])=>[e,L(n,t)])),u=new Map;for(let e of Object.values(l))u.set(e,{local:e.quaternion.clone(),parentWorld:e.parent?z(e.parent):new S});let d=(e,t)=>{let n=R(t).sub(R(e)).normalize();return new S().setFromUnitVectors(n,new s(0,-1,0))},f={left:d(l.leftShoulder,l.leftElbow),right:d(l.rightShoulder,l.rightElbow)},p=F();o.material=p,o.geometry=o.geometry.clone();let m=I(),g=new x(o.geometry,m);g.bind(o.skeleton,o.bindMatrix),g.frustumCulled=!1,g.renderOrder=1,o.parent?.add(g),g.position.copy(o.position),g.quaternion.copy(o.quaternion),g.scale.copy(o.scale);let _={root:i,mesh:o,material:p,glowMesh:g,glowMaterial:m,bones:l,rest:u,armHang:f};return o.geometry.setAttribute(`glowMask`,V(_,new Set(t.map(e=>O[e])))),_}function U(e,t,n,r=new S){let{local:i,parentWorld:a}=e.rest.get(t),o=r.clone().multiply(a);t.quaternion.copy(o.clone().invert().multiply(n).multiply(o).multiply(i))}var W=(e,t)=>new S().setFromAxisAngle(e,t*k);function G(e,t,n){let{bones:r}=e,[i,a,o]=t===`left`?[r.leftHip,r.leftKnee,r.leftAnkle]:[r.rightHip,r.rightKnee,r.rightAnkle];U(e,i,W(A,-n.hip)),U(e,a,W(A,n.knee)),U(e,o,W(A,n.ankle))}function K(e,t,n){let{bones:r,armHang:i}=e,[a,o,s,c]=t===`left`?[r.leftShoulder,r.leftElbow,i.left,1]:[r.rightShoulder,r.rightElbow,i.right,-1];U(e,a,new S().setFromEuler(new _(-n.flex*k,0,c*n.out*k,`ZXY`)).multiply(s)),U(e,o,W(A,-n.elbow),s)}function q(e,t,n){U(e,e.bones.lowerBack,W(A,t.lean)),G(e,`left`,t.leftLeg),G(e,`right`,t.rightLeg),K(e,`left`,t.leftArm),K(e,`right`,t.rightArm);let{root:r,bones:i}=e;r.position.set(0,0,0),r.updateMatrixWorld(!0);let a=.05,o=Math.min(R(i.leftKnee).y-a,R(i.rightKnee).y-a,...[i.leftHeel,i.leftToe,i.rightHeel,i.rightToe].map(e=>R(e).y)),s=R(n===`left`?i.leftHeel:i.rightHeel);r.position.set(-s.x,-o,-s.z),r.updateMatrixWorld(!0)}function J(e,t){e.glowMaterial.uniforms.glow.value=t}function Y(e,t){return R(t===`leftHand`?e.bones.leftHand:e.bones.rightHeel)}var re=-40*k,ie=-140*k;function ae(e){return e.filter(e=>r(e).view===`back`).length*2>e.length?ie:re}var X=e(),Z=30,oe=.3,se=1.2,ce=.2,le=12,ue=`/bell-lap/models/body.glb`,Q=b({color:`#bcd8ff`,intensity:.35,coreOpacity:.07}),de=b({color:`#4fa8ff`,intensity:.25,coreOpacity:.12});function $(e,t,n,r){return new c(new m(e,t,n),r)}function fe(e,t,n){q(t,n.keyframes[e.keyframe].pose,n.plantedFoot);let r=Y(t,e.touches);if(e.kind===`wallAhead`){let e=$(1.1,2,.05,Q);return e.position.set(0,1,r.z+.07),e}if(e.kind===`wallLeft`){let e=$(.05,2,1.1,Q);return e.position.set(r.x+.07,1,r.z),e}let i=$(.36,r.y,.36,Q);return i.position.set(r.x,r.y/2,r.z+.03),i}function pe({stretch:e,demo:t,onStep:n}){let{scene:r}=g(ue),{figure:o,scene:u,view:f}=(0,w.useMemo)(()=>{let n=H(r,e.muscles),i=new h;for(let e of t.props)i.add(fe(e,n,t));let a=new d;for(let{pose:e}of t.keyframes)q(n,e,t.plantedFoot),n.mesh.computeBoundingBox(),a.union(new d().setFromObject(n.root));let o=a.getCenter(new s),l=a.getSize(new s),u={center:o,distance:Math.max(l.y,l.z,l.x)*se/(2*Math.tan(Z*Math.PI/360))},f=Math.max(l.x,l.z)/2+.2,m=new c(new p(f,f,.01,48),de);m.position.set(o.x,-.005,o.z),i.add(m,n.root);let g=ae(e.muscles);return{figure:n,scene:i,view:{...u,angle:g}}},[t,r,e.muscles]);(0,w.useEffect)(()=>()=>{o.material.dispose(),o.glowMaterial.dispose(),o.mesh.geometry.dispose()},[o]);let m=(0,w.useMemo)(()=>window.matchMedia(`(prefers-reduced-motion: reduce)`).matches,[]),_=(0,w.useRef)(-1);return l(({camera:e,clock:r})=>{let s=m?i(t)-2:r.elapsedTime,c=a(t,s);q(o,c.pose,t.plantedFoot),J(o,c.glow),c.step!==_.current&&(_.current=c.step,n(c.step));let l=m?0:ce*Math.sin(2*Math.PI*s/le),u=f.angle+l,{center:d,distance:p}=f;e.position.set(d.x+p*Math.sin(u),d.y+oe,d.z+p*Math.cos(u)),e.lookAt(d)}),(0,X.jsx)(`primitive`,{object:u})}function me({stretch:e,demo:t,onStep:n}){let{ref:r,near:i}=te(),a=(0,w.useMemo)(()=>new C(Z),[]);return(0,X.jsx)(`div`,{ref:r,className:`stretch-demo-3d`,role:`img`,"aria-label":`Animation of the ${e.name.toLowerCase()}, step by step`,children:i&&(0,X.jsx)(v,{camera:a,dpr:[1,2],children:(0,X.jsx)(w.Suspense,{fallback:null,children:(0,X.jsx)(pe,{stretch:e,demo:t,onStep:n})})})})}export{me as default};
